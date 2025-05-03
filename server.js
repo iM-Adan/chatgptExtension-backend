@@ -61,7 +61,7 @@ app.post('/ask', async (req, res) => {
 
     const topChunks = ranked.slice(0, 3).map(c => c.text).join('\n');
 
-    const prompt = `Use the following context to answer the question, and answer less than in 20 words,if you do not find it in the following context ,then do normal search and give as short answer as possible:\n${topChunks}\n\nQ: ${question}\nA:`;
+    const prompt = ` search and give as short answer as possible, if you have doubt in your answer they just add "BOD" in start of the answer:\n${topChunks}\n\nQ: ${question}\nA:`;
 
     const completion = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
