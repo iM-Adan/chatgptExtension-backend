@@ -1,3 +1,4 @@
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
