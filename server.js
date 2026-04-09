@@ -1,14 +1,10 @@
-<<<<<<< HEAD
-=======
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const pdfParse = require('pdf-parse');
-const path = require('path');
 const axios = require('axios');
-require('dotenv').config();
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 const PORT = 5000;
@@ -16,40 +12,10 @@ const PORT = 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-let pdfChunks = []; // { text: "..." }
-
-// Fallback similarity: naive word overlap
-function textSimilarity(textA, textB) {
-  const wordsA = new Set(textA.toLowerCase().split(/\W+/));
-  const wordsB = new Set(textB.toLowerCase().split(/\W+/));
-  const common = [...wordsA].filter(word => wordsB.has(word));
-  return common.length;
-}
-
-// Load PDFs and chunk into ~1000-char pieces
-async function loadPDFs() {
-  const folderPath = path.join(__dirname, 'pdfs');
-  if (!fs.existsSync(folderPath)) {
-    console.warn('⚠️ "pdfs" folder does not exist. Skipping PDF loading.');
-    return;
-  }
-
-  const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.pdf'));
-
-  for (const file of files) {
-    const buffer = fs.readFileSync(path.join(folderPath, file));
-    const data = await pdfParse(buffer);
-    const chunks = data.text.match(/(.|\s){1,1000}/g) || [];
-    for (const chunk of chunks) {
-      pdfChunks.push({ text: chunk });
-    }
-  }
-
-  console.log(`✅ Loaded ${pdfChunks.length} chunks from PDFs`);
-}
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Ask endpoint
->>>>>>> b48fd381fe361fa0d78d868e8fbaf264509b5d39
 app.post('/ask', async (req, res) => {
   const { question } = req.body;
 
@@ -62,14 +28,10 @@ app.post('/ask', async (req, res) => {
       const response = await result.response;
       const text = response.text();
 
-<<<<<<< HEAD
       return res.json({ reply: text, source: "gemini" });
     } catch (geminiErr) {
       console.log("Gemini failed, falling back...");
     }
-=======
-    const prompt = ` search and give as short answer as possible, if you have doubt in your answer they just add "BOD" in start of the answer:\n${topChunks}\n\nQ: ${question}\nA:`;
->>>>>>> b48fd381fe361fa0d78d868e8fbaf264509b5d39
 
     // 🔵 Fallback → OpenRouter
     const completion = await axios.post(
@@ -94,4 +56,9 @@ app.post('/ask', async (req, res) => {
     console.error(err.message);
     res.status(500).json({ error: "Both APIs failed" });
   }
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
